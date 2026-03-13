@@ -6,12 +6,12 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -19,6 +19,5 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Build Spring Boot
+      - name: Build with Maven
         run: mvn clean package
-        working-directory: ./Ecommerce-Backend
