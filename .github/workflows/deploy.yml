@@ -1,0 +1,50 @@
+name: Build and Deploy Spring Boot App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Spring Boot Application
+        run: mvn clean package -DskipTests
+
+      - name: Show Target Folder
+        run: |
+          echo "Target files:"
+          ls -R target
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy JAR to EC2
+        run: |
+          scp target/*.jar ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/backend.jar
+
+      - name: Deploy Spring Boot App
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            sudo pkill -f 'backend.jar' || true
+            mkdir -p '/home/ubuntu/GitHub-actions/spring boot'
+            mv /tmp/backend.jar '/home/ubuntu/GitHub-actions/spring boot/backend.jar'
+            cd '/home/ubuntu/GitHub-actions/spring boot'
+            nohup java -jar backend.jar > app.log 2>&1 &
+          "
