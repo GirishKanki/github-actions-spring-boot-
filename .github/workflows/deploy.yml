@@ -36,14 +36,14 @@ jobs:
 
       - name: Copy JAR to EC2
         run: |
-          scp target/*.jar ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/backend.jar
+          scp -o StrictHostKeyChecking=no target/*.jar ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/backend.jar
 
       - name: Deploy Spring Boot App
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            sudo pkill -f 'backend.jar' || true
-            mkdir -p '/home/ubuntu/GitHub-actions/spring boot'
-            mv /tmp/backend.jar '/home/ubuntu/GitHub-actions/spring boot/backend.jar'
-            cd '/home/ubuntu/GitHub-actions/spring boot'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo pkill -f backend.jar || true
+            mkdir -p "/home/ubuntu/GitHub-actions/spring boot"
+            mv /tmp/backend.jar "/home/ubuntu/GitHub-actions/spring boot/backend.jar"
+            cd "/home/ubuntu/GitHub-actions/spring boot"
             nohup java -jar backend.jar > app.log 2>&1 &
-          "
+          EOF
